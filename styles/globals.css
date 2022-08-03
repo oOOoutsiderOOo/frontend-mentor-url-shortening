@@ -213,16 +213,38 @@ input[type="text"] {
     border-radius: 10px;
     margin-right: 1rem;
     width: 100%;
+    transition: all 0.2s;
 }
 
 input[type="text"]::placeholder {
     color: var(--clr-n-gray);
+    transition: all 0.2s;
+}
+
+.noURL {
+    box-shadow: inset 0px 0px 2px 3px var(--clr-s-red);
+    transition: all 0.1s;
+}
+
+input.noURL[type="text"]::placeholder {
+    color: var(--clr-s-red);
+    transition: all 0.1s;
 }
 
 .shortener-wrapper button {
     border-radius: 10px;
     min-width: 180px;
     text-align: center;
+}
+
+.no-url-message {
+    font-size: 16px;
+    font-style: italic;
+    position: absolute;
+    bottom: 12px;
+    left: 80px;
+    color: var(--clr-s-red);
+    transition: all 0.2s;
 }
 
 .shortened-line {
@@ -497,6 +519,10 @@ footer img {
     .shortener-wrapper button {
         width: 100%;
         margin: 0;
+    }
+
+    .no-url-message {
+        display: none;
     }
 
     h2 {

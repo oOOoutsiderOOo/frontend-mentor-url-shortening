@@ -1,16 +1,34 @@
 import type { NextPage } from "next";
-import { KeyboardEvent, RefObject, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { KeyboardEvent, RefObject, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 
 type shortened = [{ link?: string; short?: string }?];
 
 const Shortener = (props: any) => {
     const [URL, setURL] = useState("");
+    const inputField = useRef<HTMLInputElement>(null);
+    const addLinkAlert = useRef<HTMLInputElement>(null);
 
     async function handleClick() {
-        fetch(`https://api.shrtco.de/v2/shorten?url=${URL}`)
-            .then(response => response.json())
-            .then(data => props.setShortened([...props.shortened, { link: data.result.original_link, short: data.result.short_link }]));
+        if (URL === "") {
+            inputField.current?.classList.toggle("noURL");
+            addLinkAlert.current?.classList.toggle("display-none");
+            setTimeout(() => {
+                inputField.current?.classList.toggle("noURL");
+                addLinkAlert.current?.classList.toggle("display-none");
+            }, 2000);
+        } else {
+            fetch(`https://api.shrtco.de/v2/shorten?url=${URL}`)
+                .then(response => response.json())
+                .then(data => {
+                    props.setShortened([...props.shortened, { link: data.result.original_link, short: data.result.short_link }]);
+                    localStorage.setItem(
+                        "shortened",
+                        JSON.stringify([...props.shortened, { link: data.result.original_link, short: data.result.short_link }])
+                    );
+                })
+                .catch(error => alert("URL is not valid"));
+        }
     }
 
     const keyHandler = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -20,23 +38,38 @@ const Shortener = (props: any) => {
     };
 
     return (
-        <motion.div className="shortener-wrapper" initial={{ y: 500 }} animate={{ y: "-50%" }}>
-            <input
-                type="text"
-                value={URL}
-                className="url-input"
-                placeholder="Shorten a link here..."
-                onChange={e => setURL(e.target.value)}
-                onKeyDown={e => keyHandler(e)}
-            />
-            <button onClick={() => handleClick()}>Shorten it!</button>
-        </motion.div>
+        <>
+            <motion.div className="shortener-wrapper" initial={{ y: 500 }} animate={{ y: "-50%" }}>
+                <input
+                    type="text"
+                    value={URL}
+                    ref={inputField}
+                    className="url-input"
+                    placeholder="Shorten a link here..."
+                    onChange={e => setURL(e.target.value)}
+                    onKeyDown={e => keyHandler(e)}
+                />
+                <button onClick={() => handleClick()}>Shorten it!</button>
+                <div className="no-url-message display-none" ref={addLinkAlert}>
+                    Please add a link
+                </div>
+            </motion.div>
+        </>
     );
 };
 
 const Home: NextPage = () => {
-    const [shortened, setShortened] = useState<shortened>([]);
     const hamMenu = useRef<HTMLDivElement>(null);
+    const [shortened, setShortened] = useState<shortened>([]);
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const items = JSON.parse(localStorage.getItem("shortened") as string);
+            if (items) {
+                setShortened(items);
+            }
+        }
+    }, []);
 
     const copyHandler = (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
         const target = e.target as HTMLInputElement;
